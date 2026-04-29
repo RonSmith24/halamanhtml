@@ -1,37 +1,139 @@
-<script>
-async function generateVideo() {
-  const script = document.getElementById("script").value;
+<!DOCTYPE html>
 
-  if (!script) {
-    alert("Isi script dulu!");
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Text to Video Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #0f172a;
+      color: #fff;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 15px;
+      border: none;
+    }
+    textarea {
+      background: #0f172a !important;
+      color: #fff !important;
+      border: 1px solid #334155 !important;
+    }
+    .btn-custom {
+      background: linear-gradient(45deg, #6366f1, #06b6d4);
+      border: none;
+      color: #fff;
+    }
+    #videoPreview {
+      width: 100%;
+      height: 500px;
+      background: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 20px;
+      line-height: 1.5;
+    }
+  </style>
+
+</head>
+
+<body>
+
+<div class="container py-5">
+
+  <div class="text-center mb-5">
+    <h1>🚀 AI Text to Video Generator</h1>
+    <p>Bikin konten viral cepat tanpa backend</p>
+  </div>
+
+  <div class="card p-4 shadow-lg">
+
+```
+<label class="mb-2">Masukkan Script</label>
+<textarea id="script" class="form-control" rows="5"
+  placeholder="Contoh: Lu pernah ngerasa hidup makin susah?..."></textarea>
+
+<div class="row mt-3">
+  <div class="col-md-4">
+    <label>Durasi</label>
+    <select id="duration" class="form-control">
+      <option value="15">15 Detik</option>
+      <option value="30">30 Detik</option>
+    </select>
+  </div>
+
+  <div class="col-md-4">
+    <label>Style</label>
+    <select id="style" class="form-control">
+      <option value="motivasi">Motivasi</option>
+      <option value="story">Story</option>
+      <option value="dark">Dark</option>
+    </select>
+  </div>
+
+  <div class="col-md-4">
+    <label>Voice</label>
+    <select id="voice" class="form-control">
+      <option value="id-ID">Indonesia</option>
+      <option value="en-US">English</option>
+    </select>
+  </div>
+</div>
+
+<button onclick="generateVideo()" class="btn btn-custom w-100 mt-4 py-3">
+  🎬 Generate Video
+</button>
+
+<div class="mt-4 text-center" id="result"></div>
+```
+
+  </div>
+
+</div>
+
+<script>
+function generateVideo() {
+  const text = document.getElementById("script").value.trim();
+  const style = document.getElementById("style").value;
+  const voiceLang = document.getElementById("voice").value;
+
+  if (!text) {
+    alert("Isi script dulu bro!");
     return;
   }
 
-  const result = document.getElementById("result");
+  // 🎨 Style warna
+  let bg = "#000";
+  if (style === "motivasi") bg = "#1e3a8a";
+  if (style === "story") bg = "#065f46";
+  if (style === "dark") bg = "#000";
 
-  // 🎤 TEXT TO SPEECH (browser)
-  const utterance = new SpeechSynthesisUtterance(script);
-  utterance.lang = "id-ID";
-
-  speechSynthesis.speak(utterance);
-
-  // 🎬 SIMULASI VIDEO (pakai background + text)
-  result.innerHTML = `
-    <div style="
-      width:300px;
-      height:500px;
-      background:black;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-      border-radius:10px;
-      text-align:center;
-      font-size:18px;
-    ">
-      ${script}
+  // 🎬 Preview Video
+  document.getElementById("result").innerHTML = `
+    <div id="videoPreview" style="background:${bg}">
+      ${text}
     </div>
-    <p class="mt-2">🎧 Sedang diputar dengan suara</p>
+    <p class="mt-2">🎧 Sedang diputar...</p>
   `;
+
+  // 🔊 Voice (Text-to-Speech)
+  const speech = new SpeechSynthesisUtterance(text);
+  speech.lang = voiceLang;
+  speech.rate = 0.95;
+  speech.pitch = 1;
+
+  speechSynthesis.cancel(); // stop sebelumnya
+  speechSynthesis.speak(speech);
 }
 </script>
+
+</body>
+</html>
