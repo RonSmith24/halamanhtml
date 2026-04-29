@@ -2,136 +2,181 @@
 
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>AI Text to Video Generator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Shorts Generator</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <style>
-    body {
-      background: #0f172a;
-      color: #fff;
-    }
-    .card {
-      background: #1e293b;
-      border-radius: 15px;
-      border: none;
-    }
-    textarea {
-      background: #0f172a !important;
-      color: #fff !important;
-      border: 1px solid #334155 !important;
-    }
-    .btn-custom {
-      background: linear-gradient(45deg, #6366f1, #06b6d4);
-      border: none;
-      color: #fff;
-    }
-    #videoPreview {
-      width: 100%;
-      height: 500px;
-      background: black;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-      font-size: 20px;
-      line-height: 1.5;
-    }
-  </style>
+<style>
+body {
+  background:#0f172a;
+  color:#fff;
+}
+.card {
+  background:#1e293b;
+  border-radius:15px;
+}
+textarea {
+  background:#0f172a !important;
+  color:#fff !important;
+}
+canvas {
+  width:100%;
+  max-width:300px;
+  border-radius:10px;
+}
+</style>
 
 </head>
 
 <body>
 
 <div class="container py-5">
+  <h2 class="text-center mb-4">🚀 AI YouTube Shorts Generator</h2>
 
-  <div class="text-center mb-5">
-    <h1>🚀 AI Text to Video Generator</h1>
-    <p>Bikin konten viral cepat tanpa backend</p>
-  </div>
-
-  <div class="card p-4 shadow-lg">
+  <div class="card p-4">
+    <textarea id="script" class="form-control" rows="5"
+    placeholder="Pisahkan kalimat dengan titik.
+Contoh:
+Lu pernah ngerasa hidup makin berat?
+Padahal lo udah berusaha?
+Tenang... Allah lagi nguji lo."></textarea>
 
 ```
-<label class="mb-2">Masukkan Script</label>
-<textarea id="script" class="form-control" rows="5"
-  placeholder="Contoh: Lu pernah ngerasa hidup makin susah?..."></textarea>
-
-<div class="row mt-3">
-  <div class="col-md-4">
-    <label>Durasi</label>
-    <select id="duration" class="form-control">
-      <option value="15">15 Detik</option>
-      <option value="30">30 Detik</option>
-    </select>
-  </div>
-
-  <div class="col-md-4">
-    <label>Style</label>
-    <select id="style" class="form-control">
-      <option value="motivasi">Motivasi</option>
-      <option value="story">Story</option>
-      <option value="dark">Dark</option>
-    </select>
-  </div>
-
-  <div class="col-md-4">
-    <label>Voice</label>
-    <select id="voice" class="form-control">
-      <option value="id-ID">Indonesia</option>
-      <option value="en-US">English</option>
-    </select>
-  </div>
-</div>
-
-<button onclick="generateVideo()" class="btn btn-custom w-100 mt-4 py-3">
+<button onclick="start()" class="btn btn-primary mt-3 w-100">
   🎬 Generate Video
 </button>
 
-<div class="mt-4 text-center" id="result"></div>
+<div class="text-center mt-4">
+  <canvas id="canvas" width="1080" height="1920"></canvas>
+</div>
+
+<div id="result" class="text-center mt-3"></div>
 ```
 
   </div>
-
 </div>
 
 <script>
-function generateVideo() {
+let recorder, chunks=[];
+
+async function start() {
   const text = document.getElementById("script").value.trim();
-  const style = document.getElementById("style").value;
-  const voiceLang = document.getElementById("voice").value;
+  if (!text) return alert("Isi script dulu!");
 
-  if (!text) {
-    alert("Isi script dulu bro!");
-    return;
+  const scenes = text.split(".").map(s => s.trim()).filter(s => s);
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const stream = canvas.captureStream(30);
+  recorder = new MediaRecorder(stream);
+  chunks = [];
+
+  recorder.ondataavailable = e => chunks.push(e.data);
+
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, {type:'video/webm'});
+    const url = URL.createObjectURL(blob);
+
+    document.getElementById("result").innerHTML = `
+      <h5>✅ Video Siap</h5>
+      <video controls width="300">
+        <source src="${url}" type="video/webm">
+      </video><br><br>
+      <a href="${url}" download="shorts.webm" class="btn btn-success">
+        ⬇️ Download
+      </a>
+    `;
+  };
+
+  recorder.start();
+
+  await playScenes(ctx, scenes);
+
+  recorder.stop();
+}
+
+async function playScenes(ctx, scenes) {
+  for (let i=0;i<scenes.length;i++) {
+    await renderScene(ctx, scenes[i]);
+    await speak(scenes[i]);
   }
+}
 
-  // 🎨 Style warna
-  let bg = "#000";
-  if (style === "motivasi") bg = "#1e3a8a";
-  if (style === "story") bg = "#065f46";
-  if (style === "dark") bg = "#000";
+function renderScene(ctx, text) {
+  return new Promise(resolve => {
+    let frame = 0;
 
-  // 🎬 Preview Video
-  document.getElementById("result").innerHTML = `
-    <div id="videoPreview" style="background:${bg}">
-      ${text}
-    </div>
-    <p class="mt-2">🎧 Sedang diputar...</p>
-  `;
+    function draw() {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0,0,1080,1920);
 
-  // 🔊 Voice (Text-to-Speech)
-  const speech = new SpeechSynthesisUtterance(text);
-  speech.lang = voiceLang;
-  speech.rate = 0.95;
-  speech.pitch = 1;
+      // animasi scale
+      let scale = 1 + Math.sin(frame*0.05)*0.05;
 
-  speechSynthesis.cancel(); // stop sebelumnya
-  speechSynthesis.speak(speech);
+      ctx.save();
+      ctx.translate(540,960);
+      ctx.scale(scale,scale);
+
+      ctx.fillStyle = "white";
+      ctx.font = "bold 60px Arial";
+      ctx.textAlign = "center";
+
+      wrapText(ctx, text, 0, 0, 800, 80);
+
+      ctx.restore();
+
+      frame++;
+
+      if (frame < 90) {
+        requestAnimationFrame(draw);
+      } else {
+        resolve();
+      }
+    }
+
+    draw();
+  });
+}
+
+function speak(text) {
+  return new Promise(resolve => {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "id-ID";
+    speech.rate = 0.95;
+
+    speech.onend = resolve;
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(speech);
+  });
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(" ");
+  let line = "";
+  let lines = [];
+
+  for (let n=0;n<words.length;n++) {
+    let testLine = line + words[n] + " ";
+    let width = ctx.measureText(testLine).width;
+
+    if (width > maxWidth && n>0) {
+      lines.push(line);
+      line = words[n] + " ";
+    } else {
+      line = testLine;
+    }
+  }
+  lines.push(line);
+
+  let startY = y - (lines.length * lineHeight)/2;
+
+  lines.forEach((l,i)=>{
+    ctx.fillText(l, x, startY + i*lineHeight);
+  });
 }
 </script>
 
